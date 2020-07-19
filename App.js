@@ -12,7 +12,7 @@ export default function App() {
     const Button = (choice) => (
         <TouchableOpacity
             style={styles.buttonStyle}
-            onPress={() => onPress(choice)}
+            onPress = {() => {onPress(choice)}}
         >
             <Text style={styles.buttonText}>
                 {choice.name.charAt(0).toUpperCase() + choice.name.slice(1)}
@@ -30,37 +30,43 @@ export default function App() {
             </View>
         );
     };
-    function onPress(choice) {
-        setUserChoice(choice);
-        setComputerChoice(randomChoice());
-        if (getResult() === -1) {
+    const onPress = (choice) => {
+        let newUserChoice = CHOICES.find(userChoice => userChoice.name === choice.name);
+        let newComputerChoice = CHOICES.find(computerChoice => computerChoice.name === randomChoice().name);        
+        
+        let result = getResult({newUserChoice, newComputerChoice});
+        //Tại sao dùng thẳng 2 state thì gamePrompt lại bị cập nhật chậm 1 bước?
+        if (result === -1) {
             setGamePrompt('Defeat!');
             setGameColor('red');
-        } else if (getResult() === 1) {
+        } else if (result === 1) {
             setGamePrompt('Victory!');
             setGameColor('green');
         } else {
             setGamePrompt('Tie!');
             setGameColor('black');
         }
+
+        setUserChoice(newUserChoice);
+        setComputerChoice(newComputerChoice);
     };
     const randomChoice = () => {
         return (CHOICES[Math.floor(Math.random() * CHOICES.length)]);
     }
-    const getResult = () => {
+    const getResult = ({newUserChoice, newComputerChoice}) => {
         let result;
 
-        if (userChoice.name === 'rock') {
-            result = computerChoice.name === 'scissors' ? 1 : -1;
+        if (newUserChoice.name === 'rock') {
+            result = newComputerChoice.name === 'scissors' ? 1 : -1;
         }
-        if (userChoice.name === 'paper') {
-            result = computerChoice.name === 'rock' ? 1 : -1;
+        if (newUserChoice.name === 'paper') {
+            result = newComputerChoice.name === 'rock' ? 1 : -1;
         }
-        if (userChoice.name === 'scissors') {
-            result = computerChoice.name === 'paper' ? 1 : -1;
+        if (newUserChoice.name === 'scissors') {
+            result = newComputerChoice.name === 'paper' ? 1 : -1;
         }
 
-        if (userChoice.name === computerChoice.name) result = 0;
+        if (newUserChoice.name === newComputerChoice.name) result = 0;
 
         return result;
     }
@@ -84,7 +90,7 @@ export default function App() {
                     return <Button
                         key={choice.name}
                         name={choice.name}
-                        onPress={() => {onPress(choice)}} />
+                        onPress={(choice) => {onPress(choice)}} />
                 })
             }
         </SafeAreaView>
