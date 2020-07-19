@@ -1,122 +1,92 @@
-import React from 'react';
-import { Text, View, TextInput, TouchableOpacity, SafeAreaView } from 'react-native';
-import { styles } from './src/Styles';
+import React, { useState } from 'react';
+import { Text, Image, View, TextInput, TouchableOpacity, SafeAreaView } from 'react-native';
+import { styles } from './src/Styles.js';
+import { CHOICES } from './src/CHOICES'
 
+export default function App() {
+    const [gamePrompt, setGamePrompt] = useState('Fight!');
+    const [gameColor, setGameColor] = useState('black');
+    const [userChoice, setUserChoice] = useState(CHOICES[0]);
+    const [computerChoice, setComputerChoice] = useState(CHOICES[0]);
 
-const ConversionTypeButton = ({
-    to,
-    from,
-    toCurrency,
-    fromCurrency,
-    setConversionCurrencies
-}) => {
-    const isSelectedConversionType = fromCurrency === from && toCurrency === to;
-    const backgroundColor = isSelectedConversionType ? 'lightblue' : null;
-    const conditionalButtonStyle = { backgroundColor };
-
-    const fromFlag = from === 'usd' ? 'USD' : 'VND';
-    const toFlag = to === 'usd' ? 'USD' : 'VND';
-
-    return (
+    const Button = (choice) => (
         <TouchableOpacity
-            style={[styles.button, conditionalButtonStyle]}
-            onPress={() => setConversionCurrencies(from, to)}
+            style={styles.buttonStyle}
+            onPress={() => onPress(choice)}
         >
             <Text style={styles.buttonText}>
-                {fromFlag} to {toFlag}
+                {choice.name.charAt(0).toUpperCase() + choice.name.slice(1)}
             </Text>
         </TouchableOpacity>
     );
-};
+    const ChoiceCard = ({ player, choice }) => {
+        const title = choice.name && choice.name.charAt(0).toUpperCase() + choice.name.slice(1);
+        // why must have && ???
+        return (
+            <View style={styles.choiceContainer}>
+                <Text style={styles.choiceDescription}>{player}</Text>
+                <Image source={choice.source} style={styles.choiceImage} />
+                <Text style={styles.choiceCardTitle}>{title}</Text>
+            </View>
+        );
+    };
+    function onPress(choice) {
+        setUserChoice(choice);
+        setComputerChoice(randomChoice());
+        if (getResult() === -1) {
+            setGamePrompt('Defeat!');
+            setGameColor('red');
+        } else if (getResult() === 1) {
+            setGamePrompt('Victory!');
+            setGameColor('green');
+        } else {
+            setGamePrompt('Tie!');
+            setGameColor('black');
+        }
+    };
+    const randomChoice = () => {
+        return (CHOICES[Math.floor(Math.random() * CHOICES.length)]);
+    }
+    const getResult = () => {
+        let result;
 
-const FormattedCurrency = props => {
-    const format = props.type === 'usd' ? 'USD' : 'VND';
-    const currency = props.type === 'usd' ? 'USD' : 'VND';
-    const flag = props.type === 'usd' ? 'USD' : 'VND';
+        if (userChoice.name === 'rock') {
+            result = computerChoice.name === 'scissors' ? 1 : -1;
+        }
+        if (userChoice.name === 'paper') {
+            result = computerChoice.name === 'rock' ? 1 : -1;
+        }
+        if (userChoice.name === 'scissors') {
+            result = computerChoice.name === 'paper' ? 1 : -1;
+        }
 
-    const formatter = new Intl.NumberFormat(format, {
-        currency,
-        style: 'currency'
-    });
+        if (userChoice.name === computerChoice.name) result = 0;
+
+        return result;
+    }
 
     return (
-        <Text style={styles.currencyText}>
-            {formatter.format(props.value)} {flag}
-        </Text>
+        <SafeAreaView style={styles.container}>
+            <Text style={{ fontSize: 30, color: gameColor, fontWeight: 'bold' }}>{gamePrompt}</Text>
+            <View style={styles.choicesContainer}>
+                <ChoiceCard
+                    player='User'
+                    choice={userChoice}
+                />
+                <Text style={{ color: 'green', fontSize: 25, fontWeight: 'bold' }}>vs</Text>
+                <ChoiceCard
+                    player='Computer'
+                    choice={computerChoice}
+                />
+            </View>
+            {
+                CHOICES.map(choice => {
+                    return <Button
+                        key={choice.name}
+                        name={choice.name}
+                        onPress={() => {onPress(choice)}} />
+                })
+            }
+        </SafeAreaView>
     );
-};
-
-
-export default class App extends React.Component {
-    constructor(props) {
-        super(props)
-        this.state = {
-            currentCurrencyValue: 0,
-            convertedCurrencyValue: 0,
-            fromCurrency: 'vnd',
-            toCurrency: 'usd'
-        }
-    }
-
-    render() {
-        return (
-            <SafeAreaView style={styles.container}>
-                <Text style={styles.instruction}>Please enter the value of the currency you want to convert</Text>
-                <TextInput
-                    autoFocus={true}
-                    textAlign='center '
-                    keyboardType='number-pad'
-                    placeholder='100,000,000 VND'
-                    selectionColor='red'
-                    style={styles.input}
-                    onChangeText = {(text) => {
-                        this.setState({ currentCurrencyValue: text });
-                        this.convertCurrency(text);
-                    }}
-                />
-                <ConversionTypeButton
-                    from='vnd' to='usd'
-                    toCurrency={this.state.toCurrency}
-                    fromCurrency={this.state.fromCurrency}
-                    setConversionCurrencies={this.setConversionCurrencies}
-                />
-                <ConversionTypeButton
-                    from='usd' to='vnd'
-                    toCurrency={this.state.toCurrency}
-                    fromCurrency={this.state.fromCurrency}
-                    setConversionCurrencies={this.setConversionCurrencies}
-                />
-                <Text>Current currency:</Text>
-                <Text style={styles.currencyText}>{this.state.currentCurrencyValue}</Text>
-                {/* <FormattedCurrency
-                    type={this.state.fromCurrency}
-                    value={this.state.currentCurrencyValue}
-                /> */}
-
-                <Text>Converted currency:</Text>
-                {/* <Text style={styles.currencyText}>{this.state.convertedCurrencyValue}</Text> */}
-                <FormattedCurrency
-                    type={this.state.toCurrency}
-                    value={this.state.convertedCurrencyValue}
-                />
-            </SafeAreaView>
-        );
-    }
-
-    convertCurrency = (currentCurrency) => {
-        let value = (this.state.fromCurrency === 'vnd') ?
-            currentCurrency / 23000
-            : value = 23000 * currentCurrency;
-        this.setState({
-            currentCurrencyValue: currentCurrency,
-            convertedCurrencyValue: value,
-        });
-    };
-
-    setConversionCurrencies = (from, to) => {
-        this.setState({
-            fromCurrency: from,
-            toCurrency: to
-        })
-    };
 }
